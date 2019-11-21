@@ -1,0 +1,9 @@
+.Rproj.user
+.Rhistory
+.RData
+.Ruserdata
+
+# Ignore text files
+*.pdf
+*.docx
+*.zip

@@ -1,0 +1,27 @@
+branches:
+  only:
+    - master
+
+language: R
+cache: packages
+sudo: required
+dist: trusty
+
+addons:
+  apt:
+    packages:
+      - libproj-dev
+      - libgdal-dev
+
+
+warnings_are_errors: true
+
+bioc_required: true
+
+r_packages:
+  - covr
+
+#after_success:
+  # - Rscript -e 'covr::codecov()'
+  # Try to compile docker image
+  # - make docker_build
