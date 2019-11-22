@@ -55,7 +55,7 @@ num_loci<-subset(pvals,pvals<0.05)
 print("Number of loci outside of HWE:") 
 length(num_loci)
 ```
-MCMC Permutation:
+MCMC Permutation: taking too long to run right now
 ```{r}
 #HW<-hw.test(data_genind, B = 1000)
 #PVALS<-HW[,4]
@@ -81,13 +81,13 @@ DIV$Hexp[1:10]
 ```
 
 ### Look at proportion of heterozygosity per locus:
-```{r plot, fig.width=4, fig.height=3, message=FALSE}
+```{r message=FALSE}
 plot(DIV$Hobs, xlab="Locus ID", ylab="Observed Heterozygosity", 
      main="Observed heterozygosity per locus")
 ```
 
 ### We also want to compare observed and expected heterozygosity
-```{r plot1, fig.width=4, fig.height=3, message=FALSE}
+```{r message=FALSE}
 plot(DIV$Hobs,DIV$Hexp, xlab="Hobs", ylab="Hexp", 
      main="Hexp Hobs per locus")
 lm<-lm(DIV$Hexp~DIV$Hobs)
@@ -178,10 +178,35 @@ islands<-sort(unique(data$pop))
 islands
 ```
 
-
-
+Read in site coordinates:
 ```{r}
-
+site.coords<-read.csv("site.coords.csv",header=TRUE)
+head(site.coords)
+str(site.coords)
 ```
 
+Now, we convert the coordinates from each site into a pairwise geographic distance matrix.T his will give us the distance in km between each site. We're obviously oversimplifying a bit here, but it gets us close.
+```{r}
+longlats<-site.coords[,c(3,2)] # Pull out just longitude and latitude
+longlats
+site.dists<-distm(longlats) # This converts the coordinates into a distance matrix
+rownames(site.dists)<-site.coords$name # Name the rows
+colnames(site.dists)<-site.coords$name # Name the columns
+site.dists<-site.dists/1000 # Make kilometers
+site.dists
+```
 
+Ok! now we have geographic and genetic distance between sites. Lets plot them. First, convert to correct format for plotting. We have to reorder our Fst distance matrix to be in the same order as the sites - we'll alphabetize them both.
+```{r}
+ordering <- sort(attr(fst.dist, "Labels"))
+fst.mat <- as.matrix(fst.dist)[ordering, ordering]
+fst.dist<-as.dist(fst.mat, diag=TRUE)
+fst.dist
+site.dists<-as.dist(site.dists, diag=TRUE)
+site.dists
+```
+
+Now plot the genetic distance (fst.dist) agains the geographic distance (site.dists):
+```{r}
+plot(site.dists, fst.dist, pch=16, cex=1.5, col="blue", xlab="Geographic Distance (km)", ylab="Genetic Distance (pairwise WC Fst)")
+```

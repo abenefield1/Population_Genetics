@@ -129,54 +129,29 @@ library(data.table)
 library(purrr)
 library(geosphere)
 
-## create an object that contains the name of each state where sampling was done. this pulls out each unique island from our penguin dataset and puts them in a vector
-islands<-sort(unique(data$pop)) 
-islands
+# Read in site coordinates:
+site.coords<-read.csv("site.coords.csv",header=TRUE)
+head(site.coords)
+str(site.coords)
 
-## use online database to download geographic coordinates for each state this is basically telling R to take the list of our state names, search an online database for the gps coordinates for those states, and then download the coordinates into R. Pretty cool!
-
-options(geonamesUsername = "escordato")
-get_coords <- function(name, country) {
-  res <- GNsearch(name = name, state=name, country = "US")  
-  res<-res[1,]
-  res$lng<-as.numeric(res$lng)
-  res$lat<-as.numeric(res$lat)
-  out <- data.frame(name = res$adminName1, lat = res$lat, lon = res$lng)
-  return(out)  
-}
-
-## this condenses the geographic coordinates for each state into a nice dataframe
-state.coords <- states %>% 
-  map(get_coords, country = "US") %>% 
-  rbindlist()
-state.coords<-as.data.frame(state.coords)
-state.coords ## ta da! a list of geographic coordinates for each state
-
-## now, we convert the coordinates from each state into a pairwise geographic distance matrix
-## this will give us the distance in km between each state
-## we're obviously oversimplifying a bit here, but it gets us close
-
-longlats<-state.coords[,c(3,2)] ## pull out just longitude and latitude
+## Now, we convert the coordinates from each site into a pairwise geographic distance matrix.T his will give us the distance in km between each site. We're obviously oversimplifying a bit here, but it gets us close.
+longlats<-site.coords[,c(3,2)] # Pull out just longitude and latitude
 longlats
-state.dists<-distm(longlats) ## this converts the coordinates into a distance matrix
-rownames(state.dists)<-state.coords$name # name the rows
-colnames(state.dists)<-state.coords$name # name the columns
-state.dists<-state.dists/1000 ## make kilometers
-state.dists
+site.dists<-distm(longlats) # This converts the coordinates into a distance matrix
+rownames(site.dists)<-site.coords$name # name the rows
+colnames(site.dists)<-site.coords$name # name the columns
+site.dists<-site.dists/1000 ## make kilometers
+site.dists
 
-## ok! now we have geographic and genetic distance between sites. lets plot them...
-## first, convert to correct format for plotting
-## we have to re-order our fst distance matrix to be in the same order as the states- 
-## we'll alphabetize them both
+# Ok! now we have geographic and genetic distance between sites. Lets plot them. First, convert to correct format for plotting. We have to reorder our Fst distance matrix to be in the same order as the sites - we'll alphabetize them both.
 ordering <- sort(attr(fst.dist, "Labels"))
 fst.mat <- as.matrix(fst.dist)[ordering, ordering]
 fst.dist<-as.dist(fst.mat, diag=TRUE)
 fst.dist
+site.dists<-as.dist(site.dists, diag=TRUE)
+site.dists
 
-state.dists<-as.dist(state.dists, diag=TRUE)
-state.dists
-
-## now plot the genetic distance (fst.dist) agains the geographic distance (state.dists)
-plot(state.dists, fst.dist, pch=16, cex=1.5, col="blue", xlab="geographic distance (km)", 
-     ylab="genetic distance (pairwise WC Fst)")
+# Now plot the genetic distance (fst.dist) agains the geographic distance (site.dists)
+plot(site.dists, fst.dist, pch=16, cex=1.5, col="blue", xlab="Geographic Distance (km)", 
+     ylab="Genetic Distance (pairwise WC Fst)")
 
