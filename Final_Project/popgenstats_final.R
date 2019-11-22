@@ -22,16 +22,20 @@ nAll(data_genind)
 
 
 hw<-hw.test(data_genind, B=0)
-
-
 pvals<-hw[,3]
 num_loci<-subset(pvals,pvals<0.05)
 #View(num_loci)
 print("Number of loci outside of HWE:") 
 length(num_loci)
 
-# MCMC Permutation
-HW<-hw.test(data_genind, B = 1000)
+# MCMC Permutation: writing to file, b/c takes too long to run in Rmd:
+#HW<-hw.test(data_genind, B = 1000)
+# Save an object to a file
+#saveRDS(HW, file = "HW_perm.rds")
+# Remove HW
+#rm(HW)
+# Restore the object
+HW<-readRDS(file = "HW_perm.rds")
 PVALS<-HW[,4]
 NUM_loci<-subset(PVALS,PVALS<0.05)
 print("Number of loci outside of HWE:") 
@@ -111,7 +115,13 @@ wc(data_genind)
 # [1] 0.04863081
 
 ### pairwise Fst- this gives us the fst between each pair of populations using weir and cockerham's estimator. This is a measure of genetic distance bewteen each pair of populations. this calculation might take a minute
-fst.dist<-genet.dist(data_genind, method = "WC84")
+#fst.dist<-genet.dist(data_genind, method = "WC84")
+# Save object to a file
+#saveRDS(fst.dist, file = "fst_dist.rds")
+# Remove fst.dist
+#rm(fst.dist)
+# Restore the object
+fst.dist<-readRDS(file = "fst_dist.rds")
 fst.dist
 max(fst.dist) ## maximum pairwise fst 0.3015741
 min(fst.dist) ## minimum pairwise fst 0.008603233

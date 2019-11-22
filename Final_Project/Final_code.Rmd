@@ -55,13 +55,17 @@ num_loci<-subset(pvals,pvals<0.05)
 print("Number of loci outside of HWE:") 
 length(num_loci)
 ```
-MCMC Permutation: taking too long to run right now
+MCMC Permutation: taking too long to run in Rmd, so instead, I ran it in base R, wrote the 'HW' object to my workspace, and now I'm reading it back in here. The actual code was executed in the file: popgenstats_final.R.
+
+I'm keeping the code in this chunk (commented out) just to keep track of the appropriate bits of code. It's not actually executed here.
 ```{r}
 #HW<-hw.test(data_genind, B = 1000)
-#PVALS<-HW[,4]
-#NUM_loci<-subset(PVALS,PVALS<0.05)
-#print("Number of loci outside of HWE:") 
-#length(NUM_loci)
+# Restoring the HW object previously calculated:
+HW<-readRDS(file = "HW_perm.rds")
+PVALS<-HW[,4]
+NUM_loci<-subset(PVALS,PVALS<0.05)
+print("Number of loci outside of HWE:") 
+length(NUM_loci)
 ```
 
 # Diversity Statistics
@@ -148,14 +152,15 @@ plot(basicstat_final$perloc$Fst)
 
 ### Fst:
 Weir & Cockerham's Fst
-```{r}
+```{r WeirCockerham}
 wc(data_genind)
 ```
 
-**Pairwise Fst**- this gives us the Fst between each pair of populations using Weir and Cockerham's estimator. This is a measure of genetic distance bewteen each pair of populations. This calculation might take a minute:
+**Pairwise Fst**- this gives us the Fst between each pair of populations using Weir and Cockerham's estimator. This is a measure of genetic distance bewteen each pair of populations. This calculation might take a minute. I'm not running genet.dist here for the same reason that I didn't run the HW permutation in the Rmd. Instead, it's also first calculated in popgenstats_final.R, then saved to a file, then read in as an object.
 ```{r}
-fst.dist<-genet.dist(data_genind, method = "WC84")
-fst.dist
+#fst.dist<-genet.dist(data_genind, method = "WC84")
+fst.dist<-readRDS(file = "fst_dist.rds")
+head(fst.dist)
 max(fst.dist) ## maximum pairwise fst
 min(fst.dist) ## minimum pairwise fst
 mean(fst.dist) ## mean fst across all pairs
