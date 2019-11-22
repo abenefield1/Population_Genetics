@@ -131,15 +131,30 @@ length(num_loci)
 
     ## [1] 1639
 
-MCMC Permutation:
+MCMC Permutation: taking too long to run in Rmd, so instead, I ran it in
+base R, wrote the ‘HW’ object to my workspace, and now I’m reading it
+back in here. The actual code was executed in the file:
+popgenstats\_final.R.
+
+I’m keeping the code in this chunk (commented out) just to keep track of
+the appropriate bits of code. It’s not actually executed here.
 
 ``` r
 #HW<-hw.test(data_genind, B = 1000)
-#PVALS<-HW[,4]
-#NUM_loci<-subset(PVALS,PVALS<0.05)
-#print("Number of loci outside of HWE:") 
-#length(NUM_loci)
+# Restoring the HW object previously calculated:
+HW<-readRDS(file = "HW_perm.rds")
+PVALS<-HW[,4]
+NUM_loci<-subset(PVALS,PVALS<0.05)
+print("Number of loci outside of HWE:") 
 ```
+
+    ## [1] "Number of loci outside of HWE:"
+
+``` r
+length(NUM_loci)
+```
+
+    ## [1] 1287
 
 # Diversity Statistics
 
@@ -220,7 +235,7 @@ plot(DIV$Hobs, xlab="Locus ID", ylab="Observed Heterozygosity",
      main="Observed heterozygosity per locus")
 ```
 
-![](Final_code_files/figure-gfm/plot-1.png)<!-- -->
+![](Final_code_files/figure-gfm/unnamed-chunk-9-1.png)<!-- -->
 
 ### We also want to compare observed and expected heterozygosity
 
@@ -254,7 +269,7 @@ summary(lm)
 abline(lm, col="red", lwd=3)
 ```
 
-![](Final_code_files/figure-gfm/plot1-1.png)<!-- -->
+![](Final_code_files/figure-gfm/unnamed-chunk-10-1.png)<!-- -->
 
 ##### Now we can test if there a significant difference between observed and expected heterozygosity:
 
@@ -336,7 +351,7 @@ Now we plot those two values agains each other:
 plot(sample.size, ho) ## plot Ho against sample size
 ```
 
-![](Final_code_files/figure-gfm/unnamed-chunk-15-1.png)<!-- -->
+![](Final_code_files/figure-gfm/unnamed-chunk-17-1.png)<!-- -->
 
 Ok- now let’s plot Hs (the average heterozygosity of subdivided pops)
 against Ht (the pooled heterozygosity). You’ll see that these values are
@@ -349,13 +364,13 @@ plot(basicstat_final$perloc$Hs, basicstat_final$perloc$Ht, xlab="Hs in subdivide
      ylab="Ht in pooled popultions")
 ```
 
-![](Final_code_files/figure-gfm/unnamed-chunk-16-1.png)<!-- -->
+![](Final_code_files/figure-gfm/unnamed-chunk-18-1.png)<!-- -->
 
 ``` r
 plot(basicstat_final$perloc$Fst)
 ```
 
-![](Final_code_files/figure-gfm/unnamed-chunk-17-1.png)<!-- -->
+![](Final_code_files/figure-gfm/unnamed-chunk-19-1.png)<!-- -->
 
 ### Fst:
 
@@ -374,25 +389,18 @@ wc(data_genind)
 **Pairwise Fst**- this gives us the Fst between each pair of populations
 using Weir and Cockerham’s estimator. This is a measure of genetic
 distance bewteen each pair of populations. This calculation might take a
-minute:
+minute. I’m not running genet.dist here for the same reason that I
+didn’t run the HW permutation in the Rmd. Instead, it’s also first
+calculated in popgenstats\_final.R, then saved to a file, then read in
+as an object.
 
 ``` r
-fst.dist<-genet.dist(data_genind, method = "WC84")
-fst.dist
+#fst.dist<-genet.dist(data_genind, method = "WC84")
+fst.dist<-readRDS(file = "fst_dist.rds")
+head(fst.dist)
 ```
 
-    ##                  south_georgia falkland_islands george_point jougla_point
-    ## falkland_islands   0.233202497                                           
-    ## george_point       0.117326424      0.257559707                          
-    ## jougla_point       0.122395049      0.258755937  0.008603233             
-    ## south_shetland     0.117898073      0.260558071  0.010481013  0.016425565
-    ## kerguelen          0.262996150      0.261954635  0.294291897  0.301574056
-    ##                  south_shetland
-    ## falkland_islands               
-    ## george_point                   
-    ## jougla_point                   
-    ## south_shetland                 
-    ## kerguelen           0.290952335
+    ## [1] 0.2332025 0.1173264 0.1223950 0.1178981 0.2629961 0.2575597
 
 ``` r
 max(fst.dist) ## maximum pairwise fst
@@ -438,3 +446,110 @@ islands
     ## [1] falkland_islands george_point     jougla_point     kerguelen       
     ## [5] south_georgia    south_shetland  
     ## 6 Levels: falkland_islands george_point jougla_point ... south_shetland
+
+Read in site coordinates:
+
+``` r
+site.coords<-read.csv("site.coords.csv",header=TRUE)
+head(site.coords)
+```
+
+    ##                pop       lat      long
+    ## 1 falkland_islands -51.74859 -59.47048
+    ## 2     george_point -64.67109 -62.67022
+    ## 3     jougla_point -64.82916 -63.49789
+    ## 4        kerguelen -49.38297  69.35239
+    ## 5    south_georgia -54.27787 -36.81232
+    ## 6   south_shetland -62.29860 -59.05261
+
+``` r
+str(site.coords)
+```
+
+    ## 'data.frame':    6 obs. of  3 variables:
+    ##  $ pop : Factor w/ 6 levels "falkland_islands",..: 1 2 3 4 5 6
+    ##  $ lat : num  -51.7 -64.7 -64.8 -49.4 -54.3 ...
+    ##  $ long: num  -59.5 -62.7 -63.5 69.4 -36.8 ...
+
+Now, we convert the coordinates from each site into a pairwise
+geographic distance matrix.T his will give us the distance in km between
+each site. We’re obviously oversimplifying a bit here, but it gets us
+close.
+
+``` r
+longlats<-site.coords[,c(3,2)] # Pull out just longitude and latitude
+longlats
+```
+
+    ##        long       lat
+    ## 1 -59.47048 -51.74859
+    ## 2 -62.67022 -64.67109
+    ## 3 -63.49789 -64.82916
+    ## 4  69.35239 -49.38297
+    ## 5 -36.81232 -54.27787
+    ## 6 -59.05261 -62.29860
+
+``` r
+site.dists<-distm(longlats) # This converts the coordinates into a distance matrix
+rownames(site.dists)<-site.coords$name # Name the rows
+colnames(site.dists)<-site.coords$name # Name the columns
+site.dists<-site.dists/1000 # Make kilometers
+site.dists
+```
+
+    ##          [,1]       [,2]       [,3]     [,4]     [,5]      [,6]
+    ## [1,]    0.000 1451.07739 1475.21194 7797.937 1539.562 1175.1066
+    ## [2,] 1451.077    0.00000   43.17096 6696.127 1845.348  319.9462
+    ## [3,] 1475.212   43.17096    0.00000 6703.300 1888.491  358.1104
+    ## [4,] 7797.937 6696.12710 6703.30019    0.000 6615.360 6810.4313
+    ## [5,] 1539.562 1845.34831 1888.49106 6615.360    0.000 1568.4170
+    ## [6,] 1175.107  319.94621  358.11035 6810.431 1568.417    0.0000
+
+Ok\! now we have geographic and genetic distance between sites. Lets
+plot them. First, convert to correct format for plotting. We have to
+reorder our Fst distance matrix to be in the same order as the sites -
+we’ll alphabetize them both.
+
+``` r
+ordering <- sort(attr(fst.dist, "Labels"))
+fst.mat <- as.matrix(fst.dist)[ordering, ordering]
+fst.dist<-as.dist(fst.mat, diag=TRUE)
+fst.dist
+```
+
+    ##                  falkland_islands george_point jougla_point   kerguelen
+    ## falkland_islands      0.000000000                                      
+    ## george_point          0.257559707  0.000000000                         
+    ## jougla_point          0.258755937  0.008603233  0.000000000            
+    ## kerguelen             0.261954635  0.294291897  0.301574056 0.000000000
+    ## south_georgia         0.233202497  0.117326424  0.122395049 0.262996150
+    ## south_shetland        0.260558071  0.010481013  0.016425565 0.290952335
+    ##                  south_georgia south_shetland
+    ## falkland_islands                             
+    ## george_point                                 
+    ## jougla_point                                 
+    ## kerguelen                                    
+    ## south_georgia      0.000000000               
+    ## south_shetland     0.117898073    0.000000000
+
+``` r
+site.dists<-as.dist(site.dists, diag=TRUE)
+site.dists
+```
+
+    ##            1          2          3          4          5          6
+    ## 1    0.00000                                                       
+    ## 2 1451.07739    0.00000                                            
+    ## 3 1475.21194   43.17096    0.00000                                 
+    ## 4 7797.93737 6696.12710 6703.30019    0.00000                      
+    ## 5 1539.56183 1845.34831 1888.49106 6615.35955    0.00000           
+    ## 6 1175.10663  319.94621  358.11035 6810.43133 1568.41698    0.00000
+
+Now plot the genetic distance (fst.dist) agains the geographic distance
+(site.dists):
+
+``` r
+plot(site.dists, fst.dist, pch=16, cex=1.5, col="blue", xlab="Geographic Distance (km)", ylab="Genetic Distance (pairwise WC Fst)")
+```
+
+![](Final_code_files/figure-gfm/unnamed-chunk-26-1.png)<!-- -->
