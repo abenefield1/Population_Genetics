@@ -7,16 +7,20 @@ loci<-data[,c(-1,-2)]
 head(loci[1:10])
 str(loci)
 
-index <- as.character(data$sample) # labels of the individuals
-pops <- as.character(data$pop) # labels of the populations
+# labels of the individuals
+index <- as.character(data$sample)
+# labels of the populations
+pops <- as.character(data$pop)
 
 data_genind <- df2genind(loci, ploidy = 2, ind.names = index, 
                           pop = pops, sep = "/") 
 
 data_genind
-View(data_genind)
+#View(data_genind)
 data_genind@tab
 nAll(data_genind) 
+
+
 hw<-hw.test(data_genind, B=0)
 
 
@@ -27,8 +31,11 @@ print("Number of loci outside of HWE:")
 length(num_loci)
 
 # MCMC Permutation
-#HW<-hw.test(data_genind, B = 1000)
-#length(subset(HW,HW[,4]>0.05))
+HW<-hw.test(data_genind, B = 1000)
+PVALS<-HW[,4]
+NUM_loci<-subset(PVALS,PVALS<0.05)
+print("Number of loci outside of HWE:") 
+length(NUM_loci)
 
 ##################################
 ###### DIVERSITY STATS  ##########
@@ -47,7 +54,6 @@ DIV$NA.perc
 DIV$Hobs
 DIV$Hexp
 
-
 ## look at proportion of heterozygosity per locus
 plot(DIV$Hobs, xlab="Locus ID", ylab="Observed Heterozygosity", 
      main="Observed heterozygosity per locus")
@@ -62,6 +68,7 @@ abline(lm, col="red", lwd=3)
 ## Now we can test if there a significant difference between observed and expected heterozygosity
 # Check the variances are equal
 bartlett.test(list(DIV$Hexp, DIV$Hobs))
+### VARIANCE ISN'T EQUAL: p-value < 2.2e-16: Probably need to do some data transformation
 
 t.test(DIV$Hexp, DIV$Hobs, paired = T, alternative = "greater", var.equal = TRUE)
 
@@ -76,25 +83,25 @@ data_hier <- genind2hierfstat(data_genind) # Create hierfstat object. Population
 
 # The function boot.ppfis() provides confidence interval for Fis. 
 
-## calculate basic stats on pines dataset
-basicstat <- basic.stats(data_hier, diploid = TRUE, digits = 2)  
+## calculate basic stats on dataset
+basicstat_final <- basic.stats(data_hier, diploid = TRUE, digits = 2)  
 ## just typing in basic stat gives a summary of the information contained in the slots (the perloc and overall options)
-basicstat
+basicstat_final
 
-## let's first look at the relationship between sample size and heterozygosity. we're going to use the "apply" function to summarize the data tables in different slots of our basicstat object. creates an object where we the average sample size for each locus in each popthis is the mean of each column in the basicstat$n.ind.samp slot
-sample.size<-apply(basicstat$n.ind.samp, 2 ,mean) 
+## let's first look at the relationship between sample size and heterozygosity. we're going to use the "apply" function to summarize the data tables in different slots of our basicstat_final object. creates an object where we the average sample size for each locus in each popthis is the mean of each column in the basicstat_final$n.ind.samp slot
+sample.size<-apply(basicstat_final$n.ind.samp, 2 ,mean) 
 
-ho<-apply(basicstat$Ho, 2 ,mean) ## average Ho for each locus in each pop. this is the mean of each column in the basicstat$Ho slot
+ho<-apply(basicstat_final$Ho, 2 ,mean) ## average Ho for each locus in each pop. this is the mean of each column in the basicstat_final$Ho slot
 
 ## now we plot those two values agains each other:
 plot(sample.size, ho) ## plot Ho against sample size
 
-## Ok- now let's plot Hs (the average heterozygosity of subdivided pops) against Ht (the pooled heterozygosity). remember, we discussed these in lecture! you'll see that these values are columns in the basicstat$perloc slot- we canjust plot those columns against each other
+## Ok- now let's plot Hs (the average heterozygosity of subdivided pops) against Ht (the pooled heterozygosity). remember, we discussed these in lecture! you'll see that these values are columns in the basicstat_final$perloc slot- we canjust plot those columns against each other
 
 ## plot Hs against Ht
-plot(basicstat$perloc$Hs, basicstat$perloc$Ht, xlab="Hs in subdivided populations", 
+plot(basicstat_final$perloc$Hs, basicstat_final$perloc$Ht, xlab="Hs in subdivided populations", 
      ylab="Ht in pooled popultions")
-plot(basicstat$perloc$Fst)
+plot(basicstat_final$perloc$Fst)
 
 # Weir & Cockerham's Fst
 wc(data_genind)
@@ -104,7 +111,7 @@ wc(data_genind)
 # [1] 0.04863081
 
 ### pairwise Fst- this gives us the fst between each pair of populations using weir and cockerham's estimator. This is a measure of genetic distance bewteen each pair of populations. this calculation might take a minute
-#fst.dist<-genet.dist(data_genind, method = "WC84")
+fst.dist<-genet.dist(data_genind, method = "WC84")
 fst.dist
 max(fst.dist) ## maximum pairwise fst 0.3015741
 min(fst.dist) ## minimum pairwise fst 0.008603233

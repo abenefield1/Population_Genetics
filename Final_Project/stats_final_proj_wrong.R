@@ -315,7 +315,7 @@ mean(fst.dist) ## mean fst across all pairs
 ## first, we load the right packages
 ## if you get a message asking to restart R, click "no"
 
-install.packages(c("geonames","data.table","purrr","geosphere"))
+#install.packages(c("geonames","data.table","purrr","geosphere"))
 library(geonames)
 library(data.table)
 library(purrr)
