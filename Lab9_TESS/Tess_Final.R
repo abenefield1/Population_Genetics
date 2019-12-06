@@ -144,16 +144,7 @@ barplot(q.matrix.dataset3, space = 0, border=NA,
         xlab = "Individuals", ylab = "Ancestry proportions", 
         main = "Ancestry matrix") -> bp
 
-### A cool thing about TESS is that it is a spatially explicit model
-## that is, we can incorporate information about geographic sampling location into our models
-## here, let's plot how our measures of ancestry (assignment to different genetic clusters) vary across the landscape
-## we'll use the coords file to tell TESS where each sample came from (its geographic coordinates)
-
-## here, you can change which q.matrix and coord objects are entered
-## so, if you want to plot the q.matrix from dataset3, you can change this to q.matrix.map<-q.matrix3
-
-## just make sure the q.matrix and coords match- so q.matrix from dataset3 and coords3 etc
-## you can go back and change the value of K in your q-matrix, and then see how your map changes
+# A cool thing about TESS is that it is a spatially explicit model. That is, we can incorporate information about geographic sampling location into our models. Here, let's plot how our measures of ancestry (assignment to different genetic clusters) vary across the landscape. We'll use the coords file to tell TESS where each sample came from (its geographic coordinates). Here, you can change which q.matrix and coord objects are entered. So, if you want to plot the q.matrix from dataset3, you can change this to q.matrix.map<-q.matrix3. Just make sure the q.matrix and coords match- so q.matrix from dataset3 and coords3 etc. You can go back and change the value of K in your q-matrix, and then see how your map changes.
 
 q.matrix.map<-q.matrix.dataset3 ## change this value for different datasets
 coords<-coords3 ## change this value for different coordinates

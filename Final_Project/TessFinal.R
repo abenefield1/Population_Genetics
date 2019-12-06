@@ -1,25 +1,19 @@
 ####### How to run structure-type analyses in R
-
-#### download packages
+# Download packages
 #install.packages(c("fields","RColorBrewer","mapplots", "dplyr","ggplot2", "devtools","rworldmap", "maps","raster")) ## install packages
 #install.packages(c("fields","mapplots", "devtools","rworldmap","raster")) ## install packages
 
-#if (!requireNamespace("BiocManager", quietly = TRUE))
+# if (!requireNamespace("BiocManager", quietly = TRUE))
 #  install.packages("BiocManager")
 #BiocManager::install("LEA")
 #devtools::install_github("bcm-uga/TESS3_encho_sen")
 
 #devtools::install("/Users/Amy 1/Desktop/Population_Genetics/Lab/R/Lab9/TESS3_encho_sen-master")
-
-### we're checking this one for next week
-# install outFLANK
 library("devtools")
 
 #BiocManager::install("qvalue")
 #install_github("whitlock/OutFLANK")
 library(OutFLANK)
-#######
-
 
 ### load packages
 library(LEA)
@@ -41,22 +35,54 @@ source("http://membres-timc.imag.fr/Olivier.Francois/POPSutilities.R") ## supple
 ######################################################################
 ## set your working directory to where the files are located
 
+# Data Cleaning and Exploratory Data Analysis
+
+#### Reading in Data:
+data<-read.table("Dataset3.genind.txt", sep="", header=TRUE)
+head(data[1:10])
+loci<-data[,c(-1,-2)]
+head(loci[1:10])
+str(loci[1:10])
+
+#### Labels of the individuals
+index <- as.character(data$sample)
+
+#### Labels of the populations
+pops <- as.character(data$pop)
+
+## Transform from dataframe to genind:
+data_genind <- df2genind(loci, ploidy = 2, ind.names = index, 
+                         pop = pops, sep = "/") 
+data_genind
+data_genind@tab[1:10]
+#write.csv(data_genind@tab, file = "data_genind.csv", row.names=TRUE)
+
 #read in the data
-dataset1<-read.table("dataset1.geno")
+dataset1<-read.csv("data_genind.csv")
 dim(dataset1)
-head(dataset1)[1:10]
-coords1<-read.table("dataset1.coord", header=FALSE, sep="")
+head(dataset1)[1:10] # 226 individuals: 15000 SNPs
+coords1<-read.csv("Dataset3.meta.csv", sep=",")
+head(coords1)
+coords1<-coords1[,c(-1,-2,-3)] # Remove Sample and population column
+dim(coords1) # Need coordinates for every sample
 head(coords1)
 coords1<-as.matrix(coords1) ## convert to a matrix for the program to work properly
 
-## this is the main clustering command
-#dataset1.TESS<- tess3(X = dataset1,
-#                      coord = coords1,
-#                      ploidy = 2,
-#                      K = 1:6,
-#                      rep = 1,
-#                      max.iteration=1000)
+### NEED TO REMOVE THESE LOCI
+> data_genind@loc.n.all[data_genind@loc.n.all==1]
+###
 
+
+## this is the main clustering command
+dataset1.TESS<- tess3(X = dataset1,
+                      coord = coords1,
+                      ploidy = 2,
+                      K = 1:6,
+                      rep = 1,
+                      max.iteration=1000)
+# Write to file:
+#saveRDS(dataset1.TESS, file = "dataset1.TESS.rds")
+dataset1.TESS<-readRDS(file="dataset1.TESS.rds")
 
 # we tell it the dataset (X) = dataset1
 # the coord = the coords1 object
@@ -71,28 +97,12 @@ plot(dataset1.TESS, pch = 19, col = "blue",
      xlab = "Number of ancestral populations",
      ylab = "Cross-validation score")
 
-### OK, let's make structure-style barplots now
-
-# the q matrix is the object TESS created that has the assignment proportions for each individual
-# the number of columns in this object corresponds to the number of clusters (k)- so K=3 has 3 columns
-# each row is an individual
-# the values for each column for each individual (row) are the proportions of its genotype assigned to each cluster
-# so to make the barplot, we're going to plot the values for each individual as one bar. 
-# you can envision this as the rows of the q matrix being tipped on their sides, so each row is turned into one bar on the bar plot
-# the amount of each color in each bar corresponds to the proportions of ancestry- 
-# -so an individual with 0.5 in each cluster will have a bar that is half one color, half the other color
-
-#####
-## you can change the value of K here to make plots for different K values
+# OK, let's make structure-style barplots now. The q matrix is the object TESS created that has the assignment proportions for each individual. The number of columns in this object corresponds to the number of clusters (k)- so K=3 has 3 columns. Each row is an individual. The values for each column for each individual (row) are the proportions of its genotype assigned to each cluster. So to make the barplot, we're going to plot the values for each individual as one bar. You can envision this as the rows of the q matrix being tipped on their sides, so each row is turned into one bar on the bar plot. The amount of each color in each bar corresponds to the proportions of ancestry- so an individual with 0.5 in each cluster will have a bar that is half one color, half the other color. You can change the value of K here to make plots for different K values:
 q.matrix.dataset1 <- qmatrix(dataset1.TESS, K = 2) 
 head(q.matrix.dataset1)
 
 #####
 # make the STRUCTURE-like barplot for the Q-matrix 
-#barplot(q.matrix.dataset1, border="gray50", space = 0, 
- #       xlab = "Individuals", ylab = "Ancestry proportions", 
-#      main = "Ancestry matrix") ->bp
-
 barplot(q.matrix.dataset1, border=NA, space = 0,
         xlab = "Individuals", ylab = "Ancestry proportions", 
         main = "Ancestry matrix") ->bp
@@ -164,16 +174,7 @@ barplot(q.matrix.dataset3, space = 0, border=NA,
         xlab = "Individuals", ylab = "Ancestry proportions", 
         main = "Ancestry matrix") -> bp
 
-### A cool thing about TESS is that it is a spatially explicit model
-## that is, we can incorporate information about geographic sampling location into our models
-## here, let's plot how our measures of ancestry (assignment to different genetic clusters) vary across the landscape
-## we'll use the coords file to tell TESS where each sample came from (its geographic coordinates)
-
-## here, you can change which q.matrix and coord objects are entered
-## so, if you want to plot the q.matrix from dataset3, you can change this to q.matrix.map<-q.matrix3
-
-## just make sure the q.matrix and coords match- so q.matrix from dataset3 and coords3 etc
-## you can go back and change the value of K in your q-matrix, and then see how your map changes
+# A cool thing about TESS is that it is a spatially explicit model. That is, we can incorporate information about geographic sampling location into our models. Here, let's plot how our measures of ancestry (assignment to different genetic clusters) vary across the landscape. We'll use the coords file to tell TESS where each sample came from (its geographic coordinates). Here, you can change which q.matrix and coord objects are entered. So, if you want to plot the q.matrix from dataset3, you can change this to q.matrix.map<-q.matrix3. Just make sure the q.matrix and coords match- so q.matrix from dataset3 and coords3 etc. You can go back and change the value of K in your q-matrix, and then see how your map changes.
 
 q.matrix.map<-q.matrix.dataset3 ## change this value for different datasets
 coords<-coords3 ## change this value for different coordinates
